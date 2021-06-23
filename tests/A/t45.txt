@@ -1,0 +1,1 @@
+Implies (And (Exists "x" (Implies (Rel "p" []) (Rel "a" [Var "x"]))) (Exists "x" (Implies (Rel "a" [Var "x"]) (Rel "p" [])))) (Exists "x" (Iff (Rel "p" []) (Rel "a" [Var "x"])))

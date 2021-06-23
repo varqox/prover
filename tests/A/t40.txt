@@ -1,0 +1,1 @@
+Or (Implies (Rel "p" []) (Rel "q" [])) (Implies (Rel "q" []) (Rel "p" []))

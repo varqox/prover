@@ -1,0 +1,1 @@
+Iff (Iff (Rel "p" []) (Iff (Rel "q" []) (Rel "r" []))) (Iff (Iff (Rel "p" []) (Rel "q" [])) (Rel "r" []))

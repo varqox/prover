@@ -1,0 +1,1 @@
+Implies (Forall "x" (Iff (Rel "F" [Var "x"]) (Not (Rel "F" [Fun "f" [Var "x"]])))) (Exists "x" (And (Rel "F" [Var "x"]) (Not (Rel "F" [Fun "f" [Var "x"]]))))

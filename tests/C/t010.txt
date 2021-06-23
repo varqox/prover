@@ -1,0 +1,1 @@
+Exists "x" (Or (Rel "a" [Var "x"]) (Rel "a" [Fun "c" []]))

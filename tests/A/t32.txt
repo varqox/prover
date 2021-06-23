@@ -1,0 +1,1 @@
+Implies (Implies (Implies (Rel "p" []) (Rel "q" [])) (Rel "p" [])) (Rel "p" [])

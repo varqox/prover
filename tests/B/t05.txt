@@ -1,0 +1,1 @@
+Exists "x" (Not (Rel "R" [Fun "f" [Fun "c" [], Var "x"]]))

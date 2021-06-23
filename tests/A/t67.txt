@@ -1,0 +1,1 @@
+Implies (Forall "x" (Forall "y" (Iff (Rel "Q" [Var "x",Var "y"]) (Forall "z" (Iff (Rel "F" [Var "z",Var "x"]) (Rel "F" [Var "z",Var "y"])))))) (Forall "x" (Forall "y" (Iff (Rel "Q" [Var "x",Var "y"]) (Rel "Q" [Var "y",Var "x"]))))

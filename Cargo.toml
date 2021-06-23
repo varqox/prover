@@ -1,0 +1,8 @@
+[package]
+name = "prover"
+version = "0.1.0"
+# authors = ["Krzysztof Małysa"]
+edition = "2018"
+
+[dependencies]
+parser = { path = "parser" }

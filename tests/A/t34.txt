@@ -1,0 +1,1 @@
+Implies (And (Implies (Rel "q" []) (Rel "r" [])) (And (Implies (Rel "r" []) (And (Rel "p" []) (Rel "q" []))) (Implies (Rel "p" []) (Or (Rel "q" []) (Rel "r" []))))) (Iff (Rel "p" []) (Rel "q" []))

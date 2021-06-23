@@ -1,0 +1,1 @@
+Exists "x" (Forall "y" (Iff (Rel "a" [Var "c"]) (Rel "a" [Var "y"])))

@@ -1,0 +1,1 @@
+Iff (Not (Implies (Rel "p" []) (Rel "q" []))) (Or (Rel "q" []) (Rel "p" []))

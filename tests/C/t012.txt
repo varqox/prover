@@ -1,0 +1,1 @@
+Implies (And (Exists "x" (Rel "p" [Var "x"])) (And (Exists "x" (Rel "m" [Var "x"])) (And (Exists "x" (Rel "s" [Var "x"])) (And (Forall "x" (Implies (Rel "m" [Var "x"]) (Rel "p" [Var "x"]))) (Forall "x" (Implies (Rel "s" [Var "x"]) (Rel "m" [Var "x"]))))))) (Exists "x" (And (Rel "s" [Var "x"]) (Not (Rel "p" [Var "x"]))))

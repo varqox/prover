@@ -1,0 +1,1 @@
+Forall "x" (Exists "y" (Forall "z" (Rel "R" [Var "x", Var "y", Fun "f" [Fun "c" [], Var "z"]])))

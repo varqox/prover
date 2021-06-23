@@ -1,0 +1,1 @@
+Implies (And (Iff (Exists "x" (Rel "P" [Var "x"])) (Exists "x" (Rel "Q" [Var "x"]))) (Forall "x" (Forall "y" (Implies (And (Rel "P" [Var "x"]) (Rel "Q" [Var "y"])) (Iff (Rel "R" [Var "x"]) (Rel "S" [Var "y"])))))) (Iff (Forall "x" (Implies (Rel "P" [Var "x"]) (Rel "R" [Var "x"]))) (Forall "x" (Implies (Rel "Q" [Var "x"]) (Rel "S" [Var "x"]))))

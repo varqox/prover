@@ -1,0 +1,1 @@
+Implies (And (Forall "x" (Implies (And (Rel "F" [Var "x"]) (Or (Rel "G" [Var "x"]) (Rel "H" [Var "x"]))) (Rel "I" [Var "x"]))) (And (Forall "x" (Implies (And (Rel "I" [Var "x"]) (Rel "H" [Var "x"])) (Rel "J" [Var "x"]))) (Forall "x" (Implies (Rel "K" [Var "x"]) (Rel "H" [Var "x"]))))) (Forall "x" (Implies (And (Rel "F" [Var "x"]) (Rel "K" [Var "x"])) (Rel "J" [Var "x"])))

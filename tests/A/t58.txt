@@ -1,0 +1,1 @@
+Iff (Iff (Exists "x" (Forall "y" (Iff (Rel "p" [Var "x"]) (Rel "p" [Var "y"])))) (Iff (Exists "x" (Rel "q" [Var "x"])) (Forall "y" (Rel "q" [Var "y"])))) (Iff (Exists "x" (Forall "y" (Iff (Rel "q" [Var "x"]) (Rel "q" [Var "y"])))) (Iff (Exists "x" (Rel "p" [Var "x"])) (Forall "y" (Rel "p" [Var "y"]))))

@@ -1,0 +1,1 @@
+Iff (Not (Not (Rel "p" []))) (Not (Rel "p" []))

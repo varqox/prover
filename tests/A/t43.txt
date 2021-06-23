@@ -1,0 +1,1 @@
+Exists "x" (Forall "y" (Forall "z" (Implies (Implies (Rel "a" [Var "y"]) (Rel "b" [Var "z"])) (Implies (Rel "a" [Var "x"]) (Rel "b" [Var "x"])))))

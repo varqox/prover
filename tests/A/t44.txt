@@ -1,0 +1,1 @@
+Forall "x" (Forall "y" (Exists "z" (Forall "w" (Implies (Implies (And (Rel "a" [Var "x"]) (Rel "b" [Var "y"])) (And (Rel "c" [Var "z"]) (Rel "d" [Var "w"]))) (Exists "x" (Exists "y" (Implies (And (Rel "a" [Var "x"]) (Rel "b" [Var "y"])) (Exists "z" (Rel "c" [Var "z"])))))))))

@@ -1,0 +1,1 @@
+Implies (Exists "y" (Forall "x" (Iff (Rel "F" [Var "x",Var "y"]) (Rel "F" [Var "x",Var "x"])))) (Not (Forall "x" (Exists "y" (Forall "z" (Iff (Rel "F" [Var "z",Var "y"]) (Not (Rel "F" [Var "z",Var "x"])))))))

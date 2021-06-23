@@ -1,0 +1,1 @@
+Iff (Or (Rel "p" []) (And (Rel "q" []) (Rel "r" []))) (And (Or (Rel "p" []) (Rel "q" [])) (Or (Rel "p" []) (Rel "r" [])))

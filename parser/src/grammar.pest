@@ -1,0 +1,47 @@
+// Author: Michał Niciejewski
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+char = { ASCII_ALPHANUMERIC | "." | "_" | "/" }
+inner = @{ char* }
+string = ${ "\"" ~ inner ~ "\"" }
+
+t_var = { "Var" ~ string }
+t_fun = { "Fun" ~ string ~ term_array }
+
+term = _{
+    t_var |
+    t_fun
+}
+
+term_array = {
+    "[" ~ "]" |
+    "[" ~ term ~ ("," ~ term)* ~ "]"
+}
+
+subformula = _{ "(" ~ formula ~ ")" }
+
+f_rel = { "Rel" ~ string ~ term_array }
+f_not = { "Not" ~ subformula }
+f_and = { "And" ~ subformula ~ subformula }
+f_or = { "Or" ~ subformula ~ subformula }
+f_implies = { "Implies" ~ subformula ~ subformula }
+f_iff = { "Iff" ~ subformula ~ subformula }
+f_forall = { "Forall" ~ string ~ subformula }
+f_exists = { "Exists" ~ string ~ subformula }
+f_true = { "T" }
+f_false = { "F" }
+
+formula = _{
+    f_rel |
+    f_not |
+    f_and |
+    f_or |
+    f_implies |
+    f_iff |
+    f_forall |
+    f_exists |
+    f_true |
+    f_false
+}
+
+file = _{SOI ~ formula ~ EOI}

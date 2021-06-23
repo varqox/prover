@@ -1,0 +1,1 @@
+Iff (Forall "x" (Implies (And (Rel "P" [Var "a"]) (Implies (Rel "P" [Var "x"]) (Rel "P" [Var "b"]))) (Rel "P" [Var "c"]))) (Forall "x" (And (Or (Not (Rel "P" [Var "a"])) (Or (Rel "P" [Var "x"]) (Rel "P" [Var "c"]))) (Or (Not (Rel "P" [Var "a"])) (Or (Not (Rel "P" [Var "b"])) (Rel "P" [Var "c"])))))

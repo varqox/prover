@@ -1,0 +1,1 @@
+Implies (Forall "x" (Iff (Rel "p" []) (Rel "a" [Var "x"]))) (Iff (Rel "p" []) (Forall "x" (Rel "a" [Var "x"])))

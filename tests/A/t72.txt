@@ -1,0 +1,1 @@
+Implies (Forall "x" (Or (Rel "F" [Fun "a" [],Var "x"]) (Forall "y" (Rel "F" [Var "x",Var "y"])))) (Exists "x" (Forall "y" (Rel "F" [Var "x",Var "y"])))
