@@ -1,9 +1,9 @@
-use itertools::Itertools;
-
 use std::{
     collections::{HashMap, HashSet},
     fmt, mem,
 };
+
+use itertools::Itertools;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash, Default)]
 pub(crate) struct Var {
@@ -350,4 +350,51 @@ pub(crate) fn skolemize(formula: Formula, fun_alloc: &mut NameAllocator<Fun>) ->
         }
         .skolemize(into_nnf(into_sentence(formula))),
     )
+}
+
+pub(crate) fn func_sig(formula: &Formula) -> HashSet<(Fun, usize)> {
+    fn dfs_term(term: &Term, func_sig: &mut HashSet<(Fun, usize)>) {
+        match term {
+            Term::Var(_) => {}
+            Term::Fun(fun, args) => {
+                func_sig.insert((*fun, args.len()));
+                for arg in args {
+                    dfs_term(arg, func_sig);
+                }
+            }
+        }
+    }
+    fn dfs(formula: &Formula, func_sig: &mut HashSet<(Fun, usize)>) {
+        match formula {
+            Formula::True | Formula::False => {}
+            Formula::Rel(_, terms) => {
+                for term in terms {
+                    dfs_term(term, func_sig);
+                }
+            }
+            Formula::Not(phi) => dfs(phi, func_sig),
+            Formula::Or(a, b) => {
+                dfs(a, func_sig);
+                dfs(b, func_sig);
+            }
+            Formula::And(a, b) => {
+                dfs(a, func_sig);
+                dfs(b, func_sig);
+            }
+            Formula::Implies(a, b) => {
+                dfs(a, func_sig);
+                dfs(b, func_sig);
+            }
+            Formula::Iff(a, b) => {
+                dfs(a, func_sig);
+                dfs(b, func_sig);
+            }
+            Formula::Exists(_, phi) => dfs(phi, func_sig),
+            Formula::Forall(_, phi) => dfs(phi, func_sig),
+        }
+    }
+
+    let mut fs = HashSet::new();
+    dfs(formula, &mut fs);
+    fs
 }

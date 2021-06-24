@@ -2,9 +2,14 @@ use parser::formula::*;
 use std::collections::HashMap;
 use std::io::{self, Read};
 
-use crate::fo::skolemize;
+use crate::fo::{func_sig, skolemize};
+use crate::herbrand_universe::herbrand_universe;
 
 mod fo;
+mod herbrand_universe;
+mod interleave;
+mod lazy_sequence;
+mod tuple_iterator;
 
 fn parser_formula_to_fo_formula(
     pformula: Box<Formula>,
@@ -129,4 +134,6 @@ fn main() {
     println!("{:?}", fo_formula);
     let skolemized_formula = skolemize(fo_formula, &mut fun_alloc);
     println!("{:?}", skolemized_formula);
+    let hu = herbrand_universe(func_sig(&skolemized_formula));
+    println!("{:?}", hu.take(200).collect::<Vec<_>>());
 }
