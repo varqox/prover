@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 
 use crate::{
-    fo::{Fun, Term},
+    fol::{Fun, Term},
     interleave::Interleave,
     lazy_sequence::LazySequence,
     tuple_iterator::TupleIterator,
@@ -45,7 +45,7 @@ pub(crate) fn herbrand_universe(
             let fun = *fun;
             let term_iter =
                 TupleIterator::new(constants.iter(), *arity).map(move |args| Term::Fun(fun, args));
-            higher_arity_terms_iterators.push((term_iter, arity * arity));
+            higher_arity_terms_iterators.push((term_iter, 1));
         }
     }
     let higher_arity_terms_iter = Interleave::new(higher_arity_terms_iterators);

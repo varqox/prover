@@ -2,87 +2,89 @@ use parser::formula::*;
 use std::collections::HashMap;
 use std::io::{self, Read};
 
-use crate::fo::{func_sig, skolemize};
-use crate::herbrand_universe::herbrand_universe;
+use crate::prover::is_tautology;
 
-mod fo;
+mod fol;
 mod herbrand_universe;
 mod interleave;
 mod lazy_sequence;
+mod pl;
+mod pl_sat_solver;
+mod prover;
 mod tuple_iterator;
 
 fn parser_formula_to_fo_formula(
     pformula: Box<Formula>,
 ) -> (
-    fo::Formula,
-    fo::NameAllocator<fo::Var>,
-    fo::NameAllocator<fo::Fun>,
-    fo::NameAllocator<fo::Rel>,
+    fol::Formula,
+    fol::NameAllocator<fol::Var>,
+    fol::NameAllocator<fol::Fun>,
+    fol::NameAllocator<fol::Rel>,
 ) {
     #[derive(Default)]
     struct Translator {
-        var_alloc: fo::NameAllocator<fo::Var>,
-        vars: HashMap<String, fo::Var>,
-        fun_alloc: fo::NameAllocator<fo::Fun>,
-        funs: HashMap<String, fo::Fun>,
-        rel_alloc: fo::NameAllocator<fo::Rel>,
-        rels: HashMap<String, fo::Rel>,
+        var_alloc: fol::NameAllocator<fol::Var>,
+        vars: HashMap<String, fol::Var>,
+        fun_alloc: fol::NameAllocator<fol::Fun>,
+        funs: HashMap<String, fol::Fun>,
+        rel_alloc: fol::NameAllocator<fol::Rel>,
+        rels: HashMap<String, fol::Rel>,
     }
 
     impl Translator {
-        fn translate_var(&mut self, var: String) -> fo::Var {
+        fn translate_var(&mut self, var: String) -> fol::Var {
             let alloc = &mut self.var_alloc;
             *self.vars.entry(var).or_insert_with(|| alloc.alloc())
         }
 
-        fn translate_fun(&mut self, fun: String) -> fo::Fun {
+        fn translate_fun(&mut self, fun: String) -> fol::Fun {
             let alloc = &mut self.fun_alloc;
             *self.funs.entry(fun).or_insert_with(|| alloc.alloc())
         }
 
-        fn translate_rel(&mut self, rel: String) -> fo::Rel {
+        fn translate_rel(&mut self, rel: String) -> fol::Rel {
             let alloc = &mut self.rel_alloc;
             *self.rels.entry(rel).or_insert_with(|| alloc.alloc())
         }
 
-        fn translate_term(&mut self, term: Term) -> fo::Term {
+        fn translate_term(&mut self, term: Term) -> fol::Term {
             match term {
-                Term::Var(name) => fo::Term::Var(self.translate_var(name)),
-                Term::Fun(name, terms) => fo::Term::Fun(
+                Term::Var(name) => fol::Term::Var(self.translate_var(name)),
+                Term::Fun(name, terms) => fol::Term::Fun(
                     self.translate_fun(name),
                     terms.into_iter().map(|x| self.translate_term(x)).collect(),
                 ),
             }
         }
 
-        fn translate_formula(&mut self, formula: Formula) -> fo::Formula {
+        fn translate_formula(&mut self, formula: Formula) -> fol::Formula {
             match formula {
-                Formula::True => fo::Formula::True,
-                Formula::False => fo::Formula::False,
-                Formula::Rel(name, terms) => fo::Formula::Rel(
+                Formula::True => fol::Formula::True,
+                Formula::False => fol::Formula::False,
+                Formula::Rel(name, terms) => fol::Formula::Rel(
                     self.translate_rel(name),
                     terms.into_iter().map(|x| self.translate_term(x)).collect(),
                 ),
-                Formula::Not(phi) => fo::Formula::Not(Box::new(self.translate_formula(*phi))),
-                Formula::Or(phi, psi) => fo::Formula::Or(
+                Formula::Not(phi) => fol::Formula::Not(Box::new(self.translate_formula(*phi))),
+                Formula::Or(phi, psi) => fol::Formula::Or(
                     Box::new(self.translate_formula(*phi)),
                     Box::new(self.translate_formula(*psi)),
                 ),
-                Formula::And(phi, psi) => fo::Formula::And(
+                Formula::And(phi, psi) => fol::Formula::And(
                     Box::new(self.translate_formula(*phi)),
                     Box::new(self.translate_formula(*psi)),
                 ),
-                Formula::Implies(phi, psi) => fo::Formula::Implies(
+                Formula::Implies(phi, psi) => fol::Formula::Implies(
                     Box::new(self.translate_formula(*phi)),
                     Box::new(self.translate_formula(*psi)),
                 ),
-                Formula::Iff(phi, psi) => fo::Formula::Iff(
+                Formula::Iff(phi, psi) => fol::Formula::Iff(
                     Box::new(self.translate_formula(*phi)),
                     Box::new(self.translate_formula(*psi)),
                 ),
                 Formula::Exists(var, phi) => {
                     let old_mapping = self.vars.remove_entry(&var);
-                    let res = fo::Formula::Exists(
+                    let res = fol::Formula::Exists(
                         self.translate_var(var.clone()),
                         Box::new(self.translate_formula(*phi)),
                     );
@@ -98,7 +100,7 @@ fn parser_formula_to_fo_formula(
                 }
                 Formula::Forall(var, phi) => {
                     let old_mapping = self.vars.remove_entry(&var);
-                    let res = fo::Formula::Forall(
+                    let res = fol::Formula::Forall(
                         self.translate_var(var.clone()),
                         Box::new(self.translate_formula(*phi)),
                     );
@@ -129,11 +131,6 @@ fn main() {
     let mut raw_formula = String::new();
     io::stdin().read_to_string(&mut raw_formula).unwrap();
     let formula = parse_formula(&raw_formula).unwrap();
-    println!("{:?}", formula);
-    let (fo_formula, _var_alloc, mut fun_alloc, _rel_alloc) = parser_formula_to_fo_formula(formula);
-    println!("{:?}", fo_formula);
-    let skolemized_formula = skolemize(fo_formula, &mut fun_alloc);
-    println!("{:?}", skolemized_formula);
-    let hu = herbrand_universe(func_sig(&skolemized_formula));
-    println!("{:?}", hu.take(200).collect::<Vec<_>>());
+    let (formula, _var_alloc, mut fun_alloc, _rel_alloc) = parser_formula_to_fo_formula(formula);
+    println!("{}", is_tautology(formula, &mut fun_alloc) as u8);
 }

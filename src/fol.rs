@@ -5,7 +5,7 @@ use std::{
 
 use itertools::Itertools;
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash, Default)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Default, PartialOrd, Ord)]
 pub(crate) struct Var {
     name: usize,
 }
@@ -124,54 +124,116 @@ impl fmt::Debug for Formula {
     }
 }
 
-pub(crate) fn into_nnf(formula: Formula) -> Formula {
-    match formula {
-        Formula::True => Formula::True,
-        Formula::False => Formula::False,
-        Formula::Rel(rel, terms) => Formula::Rel(rel, terms),
-        Formula::Or(a, b) => Formula::Or(Box::new(into_nnf(*a)), Box::new(into_nnf(*b))),
-        Formula::And(a, b) => Formula::And(Box::new(into_nnf(*a)), Box::new(into_nnf(*b))),
-        Formula::Implies(a, b) => {
-            Formula::Or(Box::new(into_nnf(Formula::Not(a))), Box::new(into_nnf(*b)))
-        }
-        Formula::Iff(a, b) => into_nnf(Formula::Or(
-            Box::new(Formula::And(a.clone(), b.clone())),
-            Box::new(Formula::And(
-                Box::new(Formula::Not(a)),
-                Box::new(Formula::Not(b)),
-            )),
-        )),
-        Formula::Exists(var, phi) => Formula::Exists(var, Box::new(into_nnf(*phi))),
-        Formula::Forall(var, phi) => Formula::Forall(var, Box::new(into_nnf(*phi))),
-        Formula::Not(phi) => match *phi {
-            Formula::True => Formula::False,
-            Formula::False => Formula::True,
-            Formula::Rel(rel, terms) => Formula::Not(Box::new(Formula::Rel(rel, terms))),
-            Formula::Or(a, b) => into_nnf(Formula::And(
-                Box::new(Formula::Not(a)),
-                Box::new(Formula::Not(b)),
-            )),
-            Formula::And(a, b) => into_nnf(Formula::Or(
-                Box::new(Formula::Not(a)),
-                Box::new(Formula::Not(b)),
-            )),
-            Formula::Implies(a, b) => into_nnf(Formula::And(a, Box::new(Formula::Not(b)))),
-            Formula::Iff(a, b) => into_nnf(Formula::And(
-                Box::new(Formula::Or(a.clone(), b.clone())),
-                Box::new(Formula::Or(
-                    Box::new(Formula::Not(a)),
-                    Box::new(Formula::Not(b)),
-                )),
-            )),
-            Formula::Exists(var, phi) => {
-                into_nnf(Formula::Forall(var, Box::new(Formula::Not(phi))))
-            }
-            Formula::Forall(var, phi) => {
-                into_nnf(Formula::Exists(var, Box::new(Formula::Not(phi))))
-            }
-            Formula::Not(phi) => into_nnf(*phi),
-        },
+pub(crate) fn into_nnf(formula: Formula) -> (Formula, NameAllocator<Var>) {
+    #[derive(Default)]
+    struct Transformer {
+        var_alloc: NameAllocator<Var>,
+        vars: HashMap<Var, Var>,
     }
+
+    impl Transformer {
+        fn remap_var(&mut self, var: Var) -> Var {
+            let alloc = &mut self.var_alloc;
+            *self.vars.entry(var).or_insert_with(|| alloc.alloc())
+        }
+
+        fn with_shadowed_var<T, F: FnOnce(&mut Self) -> T>(&mut self, var: Var, fun: F) -> T {
+            let old_mapping = self.vars.remove_entry(&var);
+            let res = fun(self);
+            match old_mapping {
+                Some((k, v)) => {
+                    self.vars.insert(k, v);
+                }
+                None => {
+                    self.vars.remove(&var);
+                }
+            }
+            res
+        }
+
+        fn remap_term(&mut self, term: Term) -> Term {
+            match term {
+                Term::Var(var) => Term::Var(self.remap_var(var)),
+                Term::Fun(func, args) => Term::Fun(
+                    func,
+                    args.into_iter().map(|term| self.remap_term(term)).collect(),
+                ),
+            }
+        }
+
+        fn into_nnf(&mut self, formula: Formula) -> Formula {
+            match formula {
+                Formula::True => Formula::True,
+                Formula::False => Formula::False,
+                Formula::Rel(rel, terms) => Formula::Rel(
+                    rel,
+                    terms
+                        .into_iter()
+                        .map(|term| self.remap_term(term))
+                        .collect(),
+                ),
+                Formula::Or(a, b) => {
+                    Formula::Or(Box::new(self.into_nnf(*a)), Box::new(self.into_nnf(*b)))
+                }
+                Formula::And(a, b) => {
+                    Formula::And(Box::new(self.into_nnf(*a)), Box::new(self.into_nnf(*b)))
+                }
+                Formula::Implies(a, b) => Formula::Or(
+                    Box::new(self.into_nnf(Formula::Not(a))),
+                    Box::new(self.into_nnf(*b)),
+                ),
+                Formula::Iff(a, b) => self.into_nnf(Formula::Or(
+                    Box::new(Formula::And(a.clone(), b.clone())),
+                    Box::new(Formula::And(
+                        Box::new(Formula::Not(a)),
+                        Box::new(Formula::Not(b)),
+                    )),
+                )),
+                Formula::Exists(var, phi) => self.with_shadowed_var(var, |me| {
+                    Formula::Exists(me.remap_var(var), Box::new(me.into_nnf(*phi)))
+                }),
+                Formula::Forall(var, phi) => self.with_shadowed_var(var, |me| {
+                    Formula::Forall(me.remap_var(var), Box::new(me.into_nnf(*phi)))
+                }),
+                Formula::Not(phi) => match *phi {
+                    Formula::True => Formula::False,
+                    Formula::False => Formula::True,
+                    Formula::Rel(rel, terms) => {
+                        Formula::Not(Box::new(self.into_nnf(Formula::Rel(rel, terms))))
+                    }
+                    Formula::Or(a, b) => self.into_nnf(Formula::And(
+                        Box::new(Formula::Not(a)),
+                        Box::new(Formula::Not(b)),
+                    )),
+                    Formula::And(a, b) => self.into_nnf(Formula::Or(
+                        Box::new(Formula::Not(a)),
+                        Box::new(Formula::Not(b)),
+                    )),
+                    Formula::Implies(a, b) => {
+                        self.into_nnf(Formula::And(a, Box::new(Formula::Not(b))))
+                    }
+                    Formula::Iff(a, b) => self.into_nnf(Formula::And(
+                        Box::new(Formula::Or(a.clone(), b.clone())),
+                        Box::new(Formula::Or(
+                            Box::new(Formula::Not(a)),
+                            Box::new(Formula::Not(b)),
+                        )),
+                    )),
+                    Formula::Exists(var, phi) => self.with_shadowed_var(var, |me| {
+                        Formula::Forall(me.remap_var(var), Box::new(me.into_nnf(Formula::Not(phi))))
+                    }),
+                    Formula::Forall(var, phi) => self.with_shadowed_var(var, |me| {
+                        Formula::Exists(me.remap_var(var), Box::new(me.into_nnf(Formula::Not(phi))))
+                    }),
+                    Formula::Not(phi) => self.into_nnf(*phi),
+                },
+            }
+        }
+    }
+
+    let mut transformer = Transformer::default();
+    let formula = transformer.into_nnf(formula);
+    (formula, transformer.var_alloc)
 }
 
 pub(crate) fn into_pnf(formula: Formula) -> Formula {
@@ -210,7 +272,7 @@ pub(crate) fn into_pnf(formula: Formula) -> Formula {
         }
     }
     let mut extracted_quantifiers = Vec::new();
-    let formula = extract_quantifiers(into_nnf(formula), &mut extracted_quantifiers);
+    let formula = extract_quantifiers(into_nnf(formula).0, &mut extracted_quantifiers);
     extracted_quantifiers
         .into_iter()
         .rev()
@@ -324,20 +386,26 @@ pub(crate) fn skolemize(formula: Formula, fun_alloc: &mut NameAllocator<Fun>) ->
                     Formula::Iff(Box::new(self.skolemize(*a)), Box::new(self.skolemize(*b)))
                 }
                 Formula::Exists(var, phi) => {
-                    let res = self.varmap.insert(
+                    let check = self.varmap.insert(
                         var,
                         Term::Fun(
                             self.fun_alloc.alloc(),
                             self.env.iter().map(|x| Term::Var(*x)).collect(),
                         ),
                     );
-                    assert!(res.is_none());
-                    self.skolemize(*phi)
+                    assert!(check.is_none());
+                    let res = self.skolemize(*phi);
+                    self.varmap.remove(&var);
+                    res
                 }
                 Formula::Forall(var, phi) => {
                     self.env.push(var);
-                    self.varmap.insert(var, Term::Var(var));
-                    Formula::Forall(var, Box::new(self.skolemize(*phi)))
+                    let check = self.varmap.insert(var, Term::Var(var));
+                    assert!(check.is_none());
+                    let res = Formula::Forall(var, Box::new(self.skolemize(*phi)));
+                    self.env.pop();
+                    self.varmap.remove(&var);
+                    res
                 }
             }
         }
@@ -348,7 +416,7 @@ pub(crate) fn skolemize(formula: Formula, fun_alloc: &mut NameAllocator<Fun>) ->
             varmap: HashMap::new(),
             fun_alloc,
         }
-        .skolemize(into_nnf(into_sentence(formula))),
+        .skolemize(into_nnf(into_sentence(formula)).0),
     )
 }
 

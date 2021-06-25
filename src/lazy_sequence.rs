@@ -1,6 +1,5 @@
 use std::{cell::RefCell, rc::Rc};
 
-#[derive(Debug)]
 pub(crate) struct LazySequence<T> {
     pub(crate) vec: Rc<RefCell<Vec<T>>>,
 }
