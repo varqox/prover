@@ -139,88 +139,94 @@ where
         }
     }
 }
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
 
-#[test]
-fn tuple_iterator_general() {
-    for end in 0..7_usize {
-        for arity in 0..7_u32 {
-            let v = TupleIterator::new(0..end, arity as usize).collect::<Vec<_>>();
-            assert_eq!(v.len(), end.pow(arity));
+    use crate::tuple_iterator::TupleIterator;
+
+    #[test]
+    fn tuple_iterator_general() {
+        for end in 0..7_usize {
+            for arity in 0..7_u32 {
+                let v = TupleIterator::new(0..end, arity as usize).collect::<Vec<_>>();
+                assert_eq!(v.len(), end.pow(arity));
+                // Correct elements
+                let mut prev_sum = 0;
+                for tuple in v.iter() {
+                    let sum = tuple.iter().fold(0, |acc, x| acc + x);
+                    assert!(prev_sum <= sum);
+                    prev_sum = sum;
+                    let sum = sum as i64;
+                    let end = end as i64;
+                    let arity = arity as i64;
+                    assert!(sum <= arity * (end - 1));
+                }
+                // No repetitions
+                let s = v.into_iter().collect::<HashSet<_>>();
+                assert_eq!(s.len(), end.pow(arity));
+            }
+        }
+    }
+
+    #[test]
+    fn tuple_iterator_infinite() {
+        assert_eq!(TupleIterator::new(0.., 0).collect::<Vec<_>>(), vec![vec![]]);
+        assert_eq!(
+            TupleIterator::new(0.., 2).take(15).collect::<Vec<_>>(),
+            vec![
+                vec![0, 0],
+                vec![0, 1],
+                vec![1, 0],
+                vec![0, 2],
+                vec![1, 1],
+                vec![2, 0],
+                vec![0, 3],
+                vec![1, 2],
+                vec![2, 1],
+                vec![3, 0],
+                vec![0, 4],
+                vec![1, 3],
+                vec![2, 2],
+                vec![3, 1],
+                vec![4, 0]
+            ]
+        );
+        assert_eq!(
+            TupleIterator::new(0.., 3).take(16).collect::<Vec<_>>(),
+            vec![
+                vec![0, 0, 0],
+                vec![0, 0, 1],
+                vec![0, 1, 0],
+                vec![1, 0, 0],
+                vec![0, 0, 2],
+                vec![0, 1, 1],
+                vec![0, 2, 0],
+                vec![1, 0, 1],
+                vec![1, 1, 0],
+                vec![2, 0, 0],
+                vec![0, 0, 3],
+                vec![0, 1, 2],
+                vec![0, 2, 1],
+                vec![0, 3, 0],
+                vec![1, 0, 2],
+                vec![1, 1, 1]
+            ]
+        );
+        for arity in 1..10_usize {
+            let v = TupleIterator::new(0.., arity)
+                .take(1000)
+                .collect::<Vec<_>>();
             // Correct elements
             let mut prev_sum = 0;
             for tuple in v.iter() {
-                let sum = tuple.iter().fold(0, |acc, x| acc + x);
+                let sum = tuple.iter().sum();
                 assert!(prev_sum <= sum);
                 prev_sum = sum;
-                let sum = sum as i64;
-                let end = end as i64;
-                let arity = arity as i64;
-                assert!(sum <= arity * (end - 1));
             }
             // No repetitions
             let s = v.into_iter().collect::<HashSet<_>>();
-            assert_eq!(s.len(), end.pow(arity));
+            assert_eq!(s.len(), 1000);
         }
-    }
-}
-
-#[test]
-fn tuple_iterator_infinite() {
-    assert_eq!(TupleIterator::new(0.., 0).collect::<Vec<_>>(), vec![vec![]]);
-    assert_eq!(
-        TupleIterator::new(0.., 2).take(15).collect::<Vec<_>>(),
-        vec![
-            vec![0, 0],
-            vec![0, 1],
-            vec![1, 0],
-            vec![0, 2],
-            vec![1, 1],
-            vec![2, 0],
-            vec![0, 3],
-            vec![1, 2],
-            vec![2, 1],
-            vec![3, 0],
-            vec![0, 4],
-            vec![1, 3],
-            vec![2, 2],
-            vec![3, 1],
-            vec![4, 0]
-        ]
-    );
-    assert_eq!(
-        TupleIterator::new(0.., 3).take(16).collect::<Vec<_>>(),
-        vec![
-            vec![0, 0, 0],
-            vec![0, 0, 1],
-            vec![0, 1, 0],
-            vec![1, 0, 0],
-            vec![0, 0, 2],
-            vec![0, 1, 1],
-            vec![0, 2, 0],
-            vec![1, 0, 1],
-            vec![1, 1, 0],
-            vec![2, 0, 0],
-            vec![0, 0, 3],
-            vec![0, 1, 2],
-            vec![0, 2, 1],
-            vec![0, 3, 0],
-            vec![1, 0, 2],
-            vec![1, 1, 1]
-        ]
-    );
-    for arity in 1..10_usize {
-        let v = TupleIterator::new(0.., arity)
-            .take(1000)
-            .collect::<Vec<_>>();
-        // Correct elements
-        let mut prev_sum = 0;
-        for tuple in v.iter() {
-            let sum = tuple.iter().sum();
-            assert!(prev_sum <= sum);
-            prev_sum = sum;
-        }
-        // No repetitions
-        let s = v.into_iter().collect::<HashSet<_>>();
-        assert_eq!(s.len(), 1000);
     }
 }
