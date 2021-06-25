@@ -126,5 +126,7 @@ for test in ./tests/C/t*.txt; do
 done
 
 total=$((total_A + total_B + total_C))
+
 echo "Score: $score/$total"
+echo -e "import math\nscore = min(max($score, 0), 81)*35/81\nprint(math.ceil(score), '=', score)" | python
 echo "$score" > "score.txt"
